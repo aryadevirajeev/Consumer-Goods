@@ -28,7 +28,7 @@ Dump file was loaded into MySQL workbench and all the querries was fired. In Pow
 - **Min and Max manufacturing cost** - Minimum and maximum manufacturing cost is calculated from fact_manufacturing_cost
 - **Avg_pre_invoice_ct** - This is calculated from fact_preinvoice_deductions
 - **Gross_sales_amount** - This metric is calculated by inner joining tables fact_sales_monthly, fact_gross_price and multiplying sold_quantity and gross_price
-- **Total_sold_qunatity** - This is calculated by summing sold_qunatity from fact_sales_monthly
+- **Total_sold_quantity** - This is calculated by summing sold_quantity from fact_sales_monthly
 
 #### Ad-hoc querries and visuals in Power BI
  1. List of markets in which **Atliq Exclusive** operates its business in the **APAC region** 
@@ -49,28 +49,32 @@ WITH SalesSummary AS (
     SELECT
         product_code,
         fiscal_year,
-        COUNT(DISTINCT customer_code) AS unique_customers
+        COUNT(DISTINCT product_code) AS unique_products
     FROM fact_sales_monthly
     WHERE fiscal_year IN ('2020', '2021')
     GROUP BY product_code, fiscal_year
 )
 SELECT
-    COUNT(DISTINCT CASE WHEN fiscal_year = '2020' THEN unique_customers ELSE 0 END) AS unique_products_2020,
-    COUNT(DISTINCT CASE WHEN fiscal_year = '2021' THEN unique_customers ELSE 0 END) AS unique_products_2021,
+    COUNT(DISTINCT CASE WHEN fiscal_year = '2020' THEN unique_products ELSE 0 END) AS unique_products_2020,
+    COUNT(DISTINCT CASE WHEN fiscal_year = '2021' THEN unique_products  ELSE 0 END) AS unique_products_2021,
     ROUND(
-        (SUM(CASE WHEN fiscal_year = '2021' THEN unique_customers ELSE 0 END) -
-         SUM( CASE WHEN fiscal_year = '2020' THEN unique_customers ELSE 0 END)) * 100.0 /
-        NULLIF(SUM(CASE WHEN fiscal_year = '2020' THEN unique_customers ELSE 0 END), 0),
+        (SUM(CASE WHEN fiscal_year = '2021' THEN unique_products  ELSE 0 END) -
+         SUM( CASE WHEN fiscal_year = '2020' THEN unique_products  ELSE 0 END)) * 100.0 /
+        NULLIF(SUM(CASE WHEN fiscal_year = '2020' THEN unique_products  ELSE 0 END), 0),
         2
     ) AS percentage_change
 FROM SalesSummary
 GROUP BY product_code;
 ```   
 
-![REQ2_OP](https://github.com/user-attachments/assets/b9bc3c6b-734a-4500-84c2-76299eaf352c)  
+  ![REQ2](https://github.com/user-attachments/assets/0d1be99f-7a17-48bf-8bdd-8e6360b1b720)  
+
+  
+
+  ![REQ2_OP](https://github.com/user-attachments/assets/39e89332-470e-44df-b7d3-ba19afb9de19)
 
 
-![REQ2](https://github.com/user-attachments/assets/b45e7cfd-d225-442b-afbf-09691adb090a)
+
 
 3. Report with all the unique product counts for each  **segment**  and sort them in descending order of product counts
  ```sql
@@ -90,17 +94,16 @@ SELECT dp.segment,
 		count(distinct CASE WHEN fsm.fiscal_year='2020' THEN fsm.product_code  END) AS product_count_2020,
 		count(distinct CASE WHEN fsm.fiscal_year='2021' THEN fsm.product_code  END) AS product_count_2021,
         ROUND(
-        (SUM(CASE WHEN fsm.fiscal_year = '2021' THEN 1 ELSE 0 END) -
-         SUM(CASE WHEN fsm.fiscal_year = '2020' THEN 1 ELSE 0 END)) * 100.0 /
-        NULLIF(SUM(CASE WHEN fsm.fiscal_year = '2020' THEN 1 ELSE 0 END), 0),
-        2
-    ) AS percentage_change
+        (COUNT(DISTINCT CASE WHEN fsm.fiscal_year = '2021' THEN fsm.product_code END) -
+         COUNT(DISTINCT CASE WHEN fsm.fiscal_year = '2020' THEN fsm.product_code END))
+    ) AS difference
         FROM dim_product dp
 INNER JOIN fact_sales_monthly AS fsm ON dp.product_code = fsm.product_code
 GROUP BY dp.segment
-ORDER BY percentage_change DESC;
+ORDER BY difference DESC;
 ```
-![REQ4_OP](https://github.com/user-attachments/assets/0b33d705-7276-45da-b352-ffcec86cd79d)  
+
+![REQ4_OP](https://github.com/user-attachments/assets/45cb97f8-4da7-4a82-af04-c70b44a08daf)
 
 
 ![REQ4](https://github.com/user-attachments/assets/02a33f40-2b09-440b-9740-1cf84d826070)  
@@ -118,7 +121,8 @@ WHERE fmc.manufacturing_cost=(SELECT MAX(manufacturing_cost) FROM fact_manufactu
 ![REQ5_OP](https://github.com/user-attachments/assets/5d83818e-642f-4b17-b7b8-6e9253f3bb95)   
 
   
- ![REQ5](https://github.com/user-attachments/assets/61c053ce-87e9-4ac4-a92b-81903a1ad56e)
+![REQ5](https://github.com/user-attachments/assets/eae116a5-7911-463d-95c0-b5f15f228f1d)
+
 
 
 
@@ -128,7 +132,7 @@ WHERE fmc.manufacturing_cost=(SELECT MAX(manufacturing_cost) FROM fact_manufactu
 SELECT
     pid.customer_code,
     dc.customer,
-    AVG(pid.pre_invoice_discount_pct) AS avg_discount_pct
+    ROUND(AVG(pid.pre_invoice_discount_pct) * 100,2) AS avg_discount_pct
 FROM fact_pre_invoice_deductions AS pid
 INNER JOIN dim_customer AS dc ON pid.customer_code = dc.customer_code
 WHERE pid.fiscal_year='2021' AND market='India'
@@ -136,10 +140,13 @@ GROUP BY pid.customer_code, dc.customer
 ORDER BY avg_discount_pct DESC
 LIMIT 5;
 ```
-![REQ6_OP](https://github.com/user-attachments/assets/b38e9b19-ede6-472f-a407-6b43971b7be2)  
+![REQ6](https://github.com/user-attachments/assets/b536b5ad-2564-4f82-bc30-04110746f973)
+ 
+
+![REQ6_OP](https://github.com/user-attachments/assets/0540bf69-02b6-4811-b9f1-6b66e83678c7)
 
 
-![REQ6](https://github.com/user-attachments/assets/293f9c4c-036f-4c61-8445-0ff52e5ffc91)  
+ 
 
 
 7.  The complete report of the Gross sales amount for the customer  **“Atliq Exclusive”**  for each month
@@ -180,7 +187,8 @@ FROM QuarterlySales
 ORDER BY Total_Sold_Quantity DESC
 LIMIT 1; 
 ```
-![REQ8_OP](https://github.com/user-attachments/assets/f9badce9-29c4-436f-af61-f56e3bffbe31)   
+  
+![REQ8_OP](https://github.com/user-attachments/assets/ff212dbb-854c-4f32-a1c3-babb375e3a73)
 
 ![REQ8](https://github.com/user-attachments/assets/6c38efd3-74dd-4e02-99b3-edeeb59583bc)  
 
