@@ -7,7 +7,7 @@
 - [Recommendation](#recommendation)
 
 ## Project Overview  
-**Atliq Hardwares** is one of the leading computer hardware producers in India and well expanded in other countries too. The management require more insights to make quick and smart decisions. So the management is planning to expand their teams of analyst by hiring some junior analyst. Their data analytics director wanted to hire someone who is good at both tech and soft skills. Hence, he decided to conduct a **SQL** challenge which will help him understand both the skills.  
+**Atliq Hardwares** is one of the leading computer hardware producers in India and well expanded in other countries too. The management require more insights to make quick and smart decisions. So they are planning to expand their teams of analyst by hiring some junior analyst. Their data analytics director wanted to hire someone who is good at both tech and soft skills. Hence, he decided to conduct a **SQL** challenge which will help him understand both the skills.  
 There are 10 ad-hoc requests for which business insights are required. To run these requests SQL is used.  
 ## Data Source  
 A dump file **atliq_hardware_db.sql**  was provided to load the **`gdb023`** database. There were 6 tables used for this analysis in this database:  
@@ -206,10 +206,12 @@ GROUP BY  dc.channel,fgp.gross_price, fsm.sold_quantity
 ORDER BY Gross_Sales_Amount DESC
 LIMIT 1;
 ```
-![REQ9_OP](https://github.com/user-attachments/assets/9f82f3c6-70cb-4036-914c-fcea054445eb)  
+ 
+![REQ9_OP](https://github.com/user-attachments/assets/b403c8cf-167e-406d-b241-0adb21591d74)
 
+![REQ9](https://github.com/user-attachments/assets/76239fcc-dcb1-43a8-9087-7112c48e0dd5)
 
-![REQ9](https://github.com/user-attachments/assets/a7293712-ee78-44cf-b4f6-6f62b4d700b8)  
+ 
 
 
 10. Top 3 products in each division that have a high total_sold_quantity in the fiscal_year 2021
