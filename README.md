@@ -140,10 +140,12 @@ GROUP BY pid.customer_code, dc.customer
 ORDER BY avg_discount_pct DESC
 LIMIT 5;
 ```
-![REQ6](https://github.com/user-attachments/assets/b536b5ad-2564-4f82-bc30-04110746f973)
- 
+![REQ6_OP](https://github.com/user-attachments/assets/8aa429f6-0164-422b-ba51-31cab09b0a28)
 
-![REQ6_OP](https://github.com/user-attachments/assets/0540bf69-02b6-4811-b9f1-6b66e83678c7)
+![REQ6](https://github.com/user-attachments/assets/11e62c34-ff80-482c-acd2-0bb6a3b5e4f4)
+
+
+
 
 
  
@@ -196,15 +198,24 @@ LIMIT 1;
 
 9. Channel that helped to bring more gross sales in the fiscal year 2021 and the percentage of contribution
   ```sql
-SELECT dc.channel,ROUND((fgp.gross_price*fsm.sold_quantity),2) AS Gross_Sales_Amount,
-	   ROUND(((fgp.gross_price*fsm.sold_quantity)/SUM((fgp.gross_price*fsm.sold_quantity))),2) AS percentage
-FROM dim_customer AS dc
-INNER JOIN fact_sales_monthly AS fsm ON dc.customer_code=fsm.customer_code
-INNER JOIN fact_gross_price AS fgp ON fsm.product_code=fgp.product_code
-WHERE fsm.fiscal_year='2021'
-GROUP BY  dc.channel,fgp.gross_price, fsm.sold_quantity
-ORDER BY Gross_Sales_Amount DESC
-LIMIT 1;
+WITH total_sales AS (
+    SELECT SUM(fsm.sold_quantity * fgp.gross_price ) AS total
+    FROM fact_sales_monthly fsm
+    INNER JOIN fact_gross_price fgp ON fsm.product_code = fgp.product_code and fsm.fiscal_year=fgp.fiscal_year
+    WHERE fsm.fiscal_year = '2021' 
+)
+-- Main query to calculate gross sales and percentage contribution by channel
+SELECT 
+    dc.channel,
+    ROUND(SUM(fsm.sold_quantity * fgp.gross_price) / 1e6, 2) AS gross_sales_amount_mln,
+    ROUND((SUM(fsm.sold_quantity * fgp.gross_price) / ts.total) * 100, 2) AS percentage
+FROM fact_sales_monthly fsm
+INNER JOIN dim_customer dc ON fsm.customer_code = dc.customer_code
+INNER JOIN fact_gross_price fgp ON fsm.product_code = fgp.product_code AND fsm.fiscal_year = fgp.fiscal_year
+INNER JOIN total_sales ts
+WHERE fsm.fiscal_year = '2021'
+GROUP BY dc.channel, ts.total
+ORDER BY gross_sales_amount_mln DESC;
 ```
  
 ![REQ9_OP](https://github.com/user-attachments/assets/b403c8cf-167e-406d-b241-0adb21591d74)
